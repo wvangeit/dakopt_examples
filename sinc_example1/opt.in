@@ -1,0 +1,82 @@
+# Dakota configuration file
+
+environment
+    tabular_data
+        tabular_data_file
+            "opt.dat"
+    results_output
+        hdf5
+        interface_selection
+            all
+
+method                                                                                                                                                          
+    id_method = 'SURR_OPT'                                                                                                                                           
+    surrogate_based_global                                                                                                                                      
+        model_pointer = 'SURR_MODEL'                                                                                                                            
+        method_pointer = 'MOGA'                                                                                                                                 
+        max_iterations = 5                                                                                                                                     
+    output debug   
+
+method
+    id_method = "MOGA"
+    moga
+        population_size
+            10
+        max_function_evaluations
+            20
+        scaling
+    output debug
+    seed = 1234
+
+model                                                                                                                                                           
+    id_model = 'SURR_MODEL'                                                                                                                                     
+    surrogate global                                                                                                                                            
+        dace_method_pointer = 'SAMPLING'
+        gaussian_process                                                                                                                                            
+            dakota
+
+method                                                                                                                                                          
+    id_method = 'SAMPLING'                                                                                                                                      
+    model_pointer = 'TRUE_MODEL'
+    sample_type
+        lhs                                                                                                                                
+    sampling                                                                                                                                                    
+        samples = 10                                                                                                                                             
+    seed = 1234
+
+model                                                                                                                                                           
+    id_model = 'TRUE_MODEL'                                                                                                                                     
+    single                                                                                                                                                      
+        interface_pointer = 'INTERFACE'                                                                                                                                
+        variables_pointer = 'VARIABLES'                                                                                                                                
+        responses_pointer = 'RESPONSES'
+
+variables
+    id_variables = 'VARIABLES'
+    continuous_design
+        2
+        lower_bounds     
+            0.05     
+            0.01
+        upper_bounds      
+            0.125      
+            0.075
+        descriptors       
+            'x0'     
+            'x1'
+
+interface
+    id_interface = 'INTERFACE'
+    batch
+    python
+    analysis_driver
+        "map"
+
+responses
+    id_responses = 'RESPONSES'
+    objective_functions
+        1
+        descriptors
+            'f1' 
+    no_gradients
+    no_hessians
