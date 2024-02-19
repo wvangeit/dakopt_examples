@@ -64,8 +64,8 @@ class oSparcFileMap:
 
             task_output = task["output"]
 
-            objs_set = task_output["OutputFile1"]["value"]
-            objs_sets.append(objs_set)
+            print(task_output)
+            objs_sets.append(task_output)
 
         return objs_sets
 

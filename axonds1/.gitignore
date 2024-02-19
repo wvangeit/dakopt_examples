@@ -1,3 +1,6 @@
 osparc_api_secret.txt
 osparc_api_key.txt
 __pycache__
+notebook/inputs
+notebook/outputs
+map-service
