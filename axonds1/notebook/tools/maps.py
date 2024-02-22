@@ -6,7 +6,7 @@ import pathlib as pl
 
 from osparc_filecomms import handshakers
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("ToolsMap")
 
 POLLING_WAIT = 1  # second
@@ -19,7 +19,11 @@ class oSparcFileMap:
         map_file_path: pl.Path,
         caller_file_path: pl.Path,
         polling_interval: float = POLLING_WAIT,
+        verbose_level=logging.ERROR,
     ) -> None:
+        self.verbose_level = verbose_level
+        logger.setLevel(self.verbose_level)
+
         logger.info("Creating caller map")
         self.uuid = str(uuid.uuid4())
         self.map_uuid = None
@@ -37,7 +41,7 @@ class oSparcFileMap:
             self.map_file_path.parent,
             self.caller_file_path.parent,
             is_initiator=False,
-            verbose_level=logging.DEBUG,
+            verbose_level=self.verbose_level,
             polling_interval=0.1,
             print_polling_interval=100,
         )
