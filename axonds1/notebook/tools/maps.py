@@ -4,6 +4,7 @@ import uuid
 import logging
 import pathlib as pl
 
+import osparc
 from osparc_filecomms import handshakers
 
 logging.basicConfig(level=logging.ERROR)
@@ -18,6 +19,7 @@ class oSparcFileMap:
         self,
         map_file_path: pl.Path,
         caller_file_path: pl.Path,
+        osparc_cfg,
         polling_interval: float = POLLING_WAIT,
         verbose_level=logging.ERROR,
     ) -> None:
@@ -35,6 +37,8 @@ class oSparcFileMap:
         if self.caller_file_path.exists():
             self.caller_file_path.unlink()
         self.map_file_path = map_file_path
+
+        self.osparc_cfg = osparc_cfg
 
         self.handshaker = handshakers.FileHandshaker(
             self.uuid,
@@ -72,12 +76,27 @@ class oSparcFileMap:
 
         return objs_sets
 
+    def preprocess_params_set(self, input_params_set):
+        with osparc.ApiClient(self.osparc_cfg) as api_client:
+            for input_params in input_params_set:
+                for input_key, input_param in input_params["input"].items():
+                    if input_param["type"] == "upload_file":
+                        local_file_path = input_param["value"]
+                        uploaded_file = osparc.api.FilesApi(
+                            api_client).upload_file(pl.Path(local_file_path))
+                        input_param["type"] = "file"
+                        input_param["value"] = json.dumps(
+                            uploaded_file.to_dict())
+
+        return input_params_set
+
     def evaluate(self, params_set):
         logger.info(f"Evaluating: {params_set}")
 
+        processed_params_set = self.preprocess_params_set(params_set)
         tasks_uuid = str(uuid.uuid4())
         map_input_payload = self.create_map_input_payload(
-            tasks_uuid, params_set
+            tasks_uuid, processed_params_set
         )
 
         self.caller_file_path.write_text(
@@ -95,12 +114,14 @@ class oSparcFileMap:
                     break
                 if waiter % 10 == 0:
                     logger.info(
-                        f"Waiting for tasks uuid to match: payload:{payload_uuid} tasks:{tasks_uuid}"
+                        "Waiting for tasks uuid to match: "
+                        f"payload:{payload_uuid} tasks:{tasks_uuid}"
                     )
             else:
                 if waiter % 10 == 0:
                     logger.info(
-                        f"Waiting for map results at: {self.map_file_path.resolve()}"
+                        "Waiting for map results at: "
+                        f"{self.map_file_path.resolve()}"
                     )
             time.sleep(self.polling_interval)
             waiter += 1
