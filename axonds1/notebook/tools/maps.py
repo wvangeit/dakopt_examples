@@ -5,6 +5,7 @@ import logging
 import pathlib as pl
 
 import osparc
+import osparc_client
 from osparc_filecomms import handshakers
 
 logging.basicConfig(level=logging.ERROR)
@@ -90,6 +91,20 @@ class oSparcFileMap:
 
         return input_params_set
 
+    def postprocess_map_outputs(self, map_outputs):
+        processed_outputs = []
+        with osparc.ApiClient(self.osparc_cfg) as api_client:
+            for map_output in map_outputs:
+                processed_output = {}
+                for probe_name, probe_dict in map_output.items():
+                    file_dict = json.loads(probe_dict["value"])
+                    osparc_file = osparc_client.models.file.File(**file_dict)
+                    processed_output[probe_name] = osparc.api.FilesApi(
+                        api_client).download_file(osparc_file.id)
+
+                processed_outputs.append(processed_output)
+        return processed_outputs
+
     def evaluate(self, params_set):
         logger.info(f"Evaluating: {params_set}")
 
@@ -129,10 +144,11 @@ class oSparcFileMap:
         map_output_payload = json.loads(self.map_file_path.read_text())
 
         objs_set = self.read_map_output_payload(map_output_payload)
+        processed_objs_set = self.postprocess_map_outputs(objs_set)
 
-        logger.info(f"Evaluation results: {objs_set}")
+        logger.info(f"Evaluation results: {processed_objs_set}")
 
-        return objs_set
+        return processed_objs_set
 
     def map_function(self, *map_input):
         _ = map_input[0]
