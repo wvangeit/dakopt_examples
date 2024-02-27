@@ -83,7 +83,7 @@ class oSparcFileMap:
                 for input_key, input_param in input_params["input"].items():
                     if input_param["type"] == "upload_file":
                         local_file_path = input_param["value"]
-                        uploaded_file = osparc.api.FilesApi(
+                        uploaded_file = osparc.FilesApi(
                             api_client).upload_file(pl.Path(local_file_path))
                         input_param["type"] = "file"
                         input_param["value"] = json.dumps(
@@ -99,7 +99,7 @@ class oSparcFileMap:
                 for probe_name, probe_dict in map_output.items():
                     file_dict = json.loads(probe_dict["value"])
                     osparc_file = osparc_client.models.file.File(**file_dict)
-                    processed_output[probe_name] = osparc.api.FilesApi(
+                    processed_output[probe_name] = osparc.FilesApi(
                         api_client).download_file(osparc_file.id)
 
                 processed_outputs.append(processed_output)
